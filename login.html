@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Entrar · SelloDorado MX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Sello<span>Dorado</span> MX</span>
+      </a>
+      <nav class="nav-links" id="nav-links"></nav>
+    </div>
+  </header>
+
+  <main class="auth-wrap">
+    <div class="auth-card">
+      <h1>Entrar</h1>
+        <p>Accede para guardar favoritos y dejar reseñas. Debes haber confirmado tu correo.</p>
+      <form class="form" id="login-form">
+        <label>Correo
+          <input id="email" type="email" required placeholder="tu@correo.com" />
+        </label>
+        <label>Contraseña
+          <input id="password" type="password" required minlength="8" />
+        </label>
+        <button class="btn btn-primary" type="submit">Iniciar sesión</button>
+        <div class="form-msg" id="form-msg"></div>
+      </form>
+      <div class="auth-switch">
+        ¿No tienes cuenta? <a href="register.html">Regístrate</a>
+      </div>
+      <div id="resend-box" hidden style="margin-top:1rem;text-align:center">
+        <button type="button" class="btn btn-ghost btn-sm" id="resend-btn">Reenviar correo de confirmación</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

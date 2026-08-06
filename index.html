@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SelloDorado MX — Negocios locales CDMX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Sello<span>Dorado</span> MX</span>
+      </a>
+      <nav class="nav-links" id="nav-links"></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-kicker">Ciudad de México</div>
+      <h1>Descubre el sabor y el oficio de la ciudad</h1>
+      <p>Negocios locales verificados cerca de ti: comida, cultura, hospedaje y experiencias con sello de confianza.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#explorar">Explorar negocios</a>
+        <button type="button" class="btn btn-ghost" id="btn-nearest">Cerca de mí</button>
+      </div>
+    </section>
+
+    <section id="explorar">
+      <div class="toolbar">
+        <input class="search" id="search-input" type="search" placeholder="Buscar por nombre o descripción..." />
+      </div>
+      <div class="chip-row" id="category-chips"></div>
+      <div class="state-box" id="list-state">Cargando...</div>
+      <div class="grid" id="business-grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      SelloDorado MX · Documentación API:
+      <a id="footer-swagger" href="http://localhost:8088/swagger-ui.html" target="_blank" rel="noopener">Swagger UI</a>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    const swagger = document.getElementById("footer-swagger");
+    if (swagger && window.SELLO_CONFIG?.SWAGGER_URL) {
+      swagger.href = window.SELLO_CONFIG.SWAGGER_URL;
+    }
+  </script>
+  <script src="js/home.js"></script>
+</body>
+</html>
