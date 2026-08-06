@@ -25,19 +25,34 @@ async function loadDocPreviews(card, userId) {
     { type: "ADDRESS_PROOF", label: "Comprobante" },
   ];
 
-  for (const slot of slots) {
-    try {
-      const url = await apiBlob(`/users/${userId}/merchant-profile/image?type=${slot.type}`);
-      const figure = document.createElement("figure");
-      figure.innerHTML = `<img alt="${slot.label}" /><figcaption>${slot.label}</figcaption>`;
-      figure.querySelector("img").src = url;
-      box.appendChild(figure);
-    } catch {
-      const figure = document.createElement("figure");
-      figure.innerHTML = `<figcaption>${slot.label}: no disponible</figcaption>`;
-      box.appendChild(figure);
-    }
-  }
+  box.innerHTML = slots
+    .map(
+      (s) => `<figure data-type="${s.type}">
+        <div class="doc-loading">Cargando ${s.label}…</div>
+        <figcaption>${s.label}</figcaption>
+      </figure>`
+    )
+    .join("");
+
+  await Promise.all(
+    slots.map(async (slot) => {
+      const figure = box.querySelector(`figure[data-type="${slot.type}"]`);
+      try {
+        const url = await apiBlob(`/users/${userId}/merchant-profile/image?type=${slot.type}`);
+        const img = document.createElement("img");
+        img.alt = slot.label;
+        img.loading = "lazy";
+        img.src = url;
+        img.title = "Clic para ver a tamaño completo";
+        img.addEventListener("click", () => window.open(url, "_blank", "noopener"));
+        figure.querySelector(".doc-loading")?.remove();
+        figure.insertBefore(img, figure.querySelector("figcaption"));
+      } catch {
+        const loading = figure.querySelector(".doc-loading");
+        if (loading) loading.textContent = `${slot.label}: no disponible`;
+      }
+    })
+  );
 }
 
 async function loadMerchants() {

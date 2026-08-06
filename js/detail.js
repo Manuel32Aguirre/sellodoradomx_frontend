@@ -290,8 +290,13 @@ async function init() {
       scanQr(id);
     });
 
-    await Promise.all([loadProducts(id), loadRatings(id), loadProgress(id)]);
-    window.initChatWidget?.(Number(id), business.whatsappNumber || null);
+    // Chat independiente: no esperar productos/reseñas
+    try {
+      window.initChatWidget?.(Number(id));
+    } catch (chatErr) {
+      console.warn("Chat widget no pudo iniciar", chatErr);
+    }
+    await Promise.allSettled([loadProducts(id), loadRatings(id), loadProgress(id)]);
   } catch (err) {
     root.innerHTML = `<div class="state-box">${escapeHtml(err.message)}</div>`;
   }

@@ -1,7 +1,6 @@
 class ChatWidget {
-  constructor(businessId, whatsappNumber) {
+  constructor(businessId) {
     this.businessId = businessId;
-    this.whatsappNumber = whatsappNumber;
     this.open = false;
     this.mount();
   }
@@ -19,9 +18,6 @@ class ChatWidget {
           <button type="button" class="chat-close" id="chat-close" aria-label="Cerrar">×</button>
         </div>
         <div class="chat-messages" id="chat-messages"></div>
-        <div class="chat-wa" id="chat-wa">
-          <a id="chat-wa-link" target="_blank" rel="noopener">Hablar por WhatsApp</a>
-        </div>
         <form class="chat-input-row" id="chat-form">
           <input id="chat-input" type="text" placeholder="Escribe tu pregunta..." autocomplete="off" required />
           <button type="submit">Enviar</button>
@@ -33,8 +29,6 @@ class ChatWidget {
 
     this.panel = root.querySelector("#chat-panel");
     this.messages = root.querySelector("#chat-messages");
-    this.waBox = root.querySelector("#chat-wa");
-    this.waLink = root.querySelector("#chat-wa-link");
 
     root.querySelector("#chat-toggle").addEventListener("click", () => this.toggle());
     root.querySelector("#chat-close").addEventListener("click", () => this.toggle(false));
@@ -73,18 +67,12 @@ class ChatWidget {
         body: JSON.stringify({ businessId: this.businessId, message }),
       });
       this.push("bot", data.botResponse || "No tengo respuesta ahora.");
-
-      if (data.shouldShowWhatsappButton && (data.whatsappNumber || this.whatsappNumber)) {
-        const phone = data.whatsappNumber || this.whatsappNumber;
-        this.waLink.href = `https://wa.me/52${phone}?text=${encodeURIComponent("Hola, vengo de SelloDorado MX")}`;
-        this.waBox.classList.add("show");
-      }
     } catch (err) {
       this.push("bot", `Error: ${err.message}`);
     }
   }
 }
 
-window.initChatWidget = function initChatWidget(businessId, whatsappNumber) {
-  return new ChatWidget(businessId, whatsappNumber);
+window.initChatWidget = function initChatWidget(businessId) {
+  return new ChatWidget(businessId);
 };
