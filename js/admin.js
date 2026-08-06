@@ -1,5 +1,6 @@
 const {
   api,
+  apiBlob,
   renderNav,
   requireAuth,
   isAdmin,
@@ -15,6 +16,30 @@ function showTab(name) {
   });
 }
 
+async function loadDocPreviews(card, userId) {
+  const box = card.querySelector(".doc-preview");
+  if (!box || !userId) return;
+
+  const slots = [
+    { type: "IDENTIFICATION", label: "Identificación" },
+    { type: "ADDRESS_PROOF", label: "Comprobante" },
+  ];
+
+  for (const slot of slots) {
+    try {
+      const url = await apiBlob(`/users/${userId}/merchant-profile/image?type=${slot.type}`);
+      const figure = document.createElement("figure");
+      figure.innerHTML = `<img alt="${slot.label}" /><figcaption>${slot.label}</figcaption>`;
+      figure.querySelector("img").src = url;
+      box.appendChild(figure);
+    } catch {
+      const figure = document.createElement("figure");
+      figure.innerHTML = `<figcaption>${slot.label}: no disponible</figcaption>`;
+      box.appendChild(figure);
+    }
+  }
+}
+
 async function loadMerchants() {
   const box = document.getElementById("tab-merchants");
   try {
@@ -23,23 +48,31 @@ async function loadMerchants() {
       box.innerHTML = `<p class="meta">No hay solicitudes pendientes.</p>`;
       return;
     }
-    box.innerHTML = `<div class="table-wrap"><table class="data-table">
-      <thead><tr><th>Usuario</th><th>CURP / Tel</th><th>Estado</th><th>Acciones</th></tr></thead>
-      <tbody>
-        ${list
-          .map(
-            (p) => `<tr>
-          <td>${escapeHtml(p.name)} ${escapeHtml(p.lastname)}<div class="meta">${escapeHtml(p.email)}</div></td>
-          <td>${escapeHtml(p.curp)}<div class="meta">${escapeHtml(p.phone)}</div></td>
-          <td>${statusBadge(p.status)}</td>
-          <td class="inline-actions">
+
+    box.innerHTML = list
+      .map(
+        (p) => `<article class="merchant-card" data-user-id="${p.userId}" data-profile-id="${p.id}">
+        <div class="split-2">
+          <div>
+            <strong>${escapeHtml(p.name)} ${escapeHtml(p.lastname)}</strong>
+            <div class="meta">${escapeHtml(p.email)}</div>
+            <div class="meta">CURP: ${escapeHtml(p.curp)}</div>
+            <div class="meta">Tel: ${escapeHtml(p.phone)}</div>
+            <div style="margin-top:.4rem">${statusBadge(p.status)}</div>
+          </div>
+          <div class="inline-actions" style="align-items:start;justify-content:flex-end">
             <button type="button" class="btn btn-primary btn-sm" data-approve="${p.id}">Aprobar</button>
             <button type="button" class="btn btn-ghost btn-sm" data-reject="${p.id}">Rechazar</button>
-          </td>
-        </tr>`
-          )
-          .join("")}
-      </tbody></table></div>`;
+          </div>
+        </div>
+        <div class="doc-preview"></div>
+      </article>`
+      )
+      .join("");
+
+    box.querySelectorAll(".merchant-card").forEach((card) => {
+      loadDocPreviews(card, card.dataset.userId);
+    });
 
     box.querySelectorAll("[data-approve]").forEach((btn) => {
       btn.addEventListener("click", async () => {

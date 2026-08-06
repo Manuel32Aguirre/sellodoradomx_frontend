@@ -123,6 +123,17 @@
     return api(path, { method, body: formData });
   }
 
+  async function apiBlob(path) {
+    const token = getToken();
+    const response = await fetch(`${getApiBaseUrl()}${path}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) {
+      throw new Error(`No se pudo cargar el archivo (${response.status})`);
+    }
+    return URL.createObjectURL(await response.blob());
+  }
+
   async function refreshMe() {
     if (!isLoggedIn()) return null;
     const me = await api("/users/me");
@@ -246,6 +257,7 @@
     photoUrl,
     api,
     apiForm,
+    apiBlob,
     refreshMe,
     categoryLabel,
     stars,
