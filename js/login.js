@@ -41,9 +41,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       setSession(auth);
       msg.className = "form-msg ok";
+      const role = auth.user?.roleName || "";
       msg.textContent = "¡Bienvenido!";
       setTimeout(() => {
-        window.location.href = "index.html";
+        if (role === "ROLE_ADMIN") window.location.href = "admin.html";
+        else if (role === "ROLE_MERCHANT") window.location.href = "merchant.html";
+        else window.location.href = "index.html";
       }, 400);
     } catch (err) {
       msg.className = "form-msg error";

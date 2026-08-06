@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · SelloDorado MX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Sello<span>Dorado</span> MX</span>
+      </a>
+      <nav class="nav-links" id="nav-links"></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero" style="padding-bottom:1rem">
+      <div class="hero-kicker">Administración</div>
+      <h1 class="section-title">Panel admin</h1>
+      <p class="muted">Aprueba comercios, verifica negocios y gestiona sellos.</p>
+    </section>
+
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="merchants">Solicitudes comercio</button>
+      <button type="button" class="tab" data-tab="pending">Negocios pendientes</button>
+      <button type="button" class="tab" data-tab="deleted">Eliminados</button>
+    </div>
+
+    <section class="panel" id="tab-merchants"><p class="meta">Cargando...</p></section>
+    <section class="panel" id="tab-pending" hidden><p class="meta">Cargando...</p></section>
+    <section class="panel" id="tab-deleted" hidden><p class="meta">Cargando...</p></section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

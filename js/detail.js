@@ -6,11 +6,11 @@ const {
   escapeHtml,
   renderNav,
   isLoggedIn,
+  photoUrl,
 } = window.SelloAPI;
 
 function getBusinessId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("id");
+  return new URLSearchParams(window.location.search).get("id");
 }
 
 async function toggleFavorite(businessId, button) {
@@ -18,7 +18,6 @@ async function toggleFavorite(businessId, button) {
     window.location.href = "login.html";
     return;
   }
-
   const active = button.dataset.active === "true";
   button.disabled = true;
   try {
@@ -43,11 +42,9 @@ async function submitRating(businessId) {
     window.location.href = "login.html";
     return;
   }
-
   const score = Number(document.getElementById("rating-score").value);
   const comment = document.getElementById("rating-comment").value.trim();
   const msg = document.getElementById("rating-msg");
-
   try {
     await api("/ratings", {
       method: "POST",
@@ -108,6 +105,69 @@ async function loadRatings(businessId) {
   }
 }
 
+function renderProgress(progress) {
+  const pct = Math.min(100, Number(progress.percentage) || 0);
+  const offers = progress.rewardOffers || [];
+  return `
+    <div class="stack">
+      <div><strong>Nivel ${escapeHtml(progress.currentLevel)}</strong> / ${escapeHtml(progress.maxLevel)}
+        ${progress.completed ? '<span class="badge badge-ok">Completado</span>' : ""}</div>
+      <div class="progress-bar"><span style="width:${pct}%"></span></div>
+      <div class="meta">${pct}% · ${escapeHtml(progress.totalScans)} escaneos</div>
+      <div class="stack">
+        ${
+          offers.length
+            ? offers
+                .map(
+                  (o) => `<div class="product-item">Nivel ${escapeHtml(o.requiredLevel)}: ${escapeHtml(o.offerText)}</div>`
+                )
+                .join("")
+            : '<p class="meta">Sin recompensas configuradas.</p>'
+        }
+      </div>
+    </div>`;
+}
+
+async function loadProgress(businessId) {
+  const box = document.getElementById("progress-box");
+  if (!isLoggedIn()) {
+    box.innerHTML = `<p class="meta">Inicia sesión para ver tu progreso y escanear QR. <a href="login.html">Entrar</a></p>`;
+    return;
+  }
+  try {
+    const progress = await api(`/business-progress/businesses/${businessId}/me`);
+    box.innerHTML = renderProgress(progress);
+  } catch (err) {
+    box.innerHTML = `<p class="meta">${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function scanQr(businessId) {
+  if (!isLoggedIn()) {
+    window.location.href = "login.html";
+    return;
+  }
+  const token = document.getElementById("qr-token").value.trim();
+  const msg = document.getElementById("scan-msg");
+  if (!token) {
+    msg.className = "form-msg error";
+    msg.textContent = "Pega el token QR del negocio.";
+    return;
+  }
+  try {
+    const progress = await api("/business-progress/scan", {
+      method: "POST",
+      body: JSON.stringify({ businessId: Number(businessId), qrToken: token }),
+    });
+    msg.className = "form-msg ok";
+    msg.textContent = "¡Escaneo registrado!";
+    document.getElementById("progress-box").innerHTML = renderProgress(progress);
+  } catch (err) {
+    msg.className = "form-msg error";
+    msg.textContent = err.message;
+  }
+}
+
 async function syncFavoriteButton(businessId, button) {
   if (!isLoggedIn()) return;
   try {
@@ -116,7 +176,7 @@ async function syncFavoriteButton(businessId, button) {
     button.dataset.active = found ? "true" : "false";
     button.textContent = found ? "Quitar de favoritos" : "Guardar favorito";
   } catch {
-    // ignore
+    /* ignore */
   }
 }
 
@@ -124,7 +184,6 @@ async function init() {
   renderNav("");
   const id = getBusinessId();
   const root = document.getElementById("detail-root");
-
   if (!id) {
     root.innerHTML = `<div class="state-box">Negocio no encontrado.</div>`;
     return;
@@ -140,6 +199,14 @@ async function init() {
       .filter(Boolean)
       .map((b) => `<span class="badge">${b}</span>`)
       .join(" ");
+
+    const photos = (business.photos || [])
+      .map((p) => `<img src="${escapeHtml(photoUrl(p.url))}" alt="" style="border-radius:12px;max-height:180px;object-fit:cover" />`)
+      .join("");
+
+    const rewards = (business.rewardOffers || [])
+      .map((o) => `<li>Nivel ${escapeHtml(o.requiredLevel)}: ${escapeHtml(o.offerText)}</li>`)
+      .join("");
 
     root.innerHTML = `
       <section class="detail-hero">
@@ -159,11 +226,29 @@ async function init() {
         </div>
       </section>
 
+      ${photos ? `<section class="panel"><h2>Fotos</h2><div class="split-2">${photos}</div></section>` : ""}
+
       ${
         business.story
-          ? `<section class="panel"><h2>Historia</h2><p>${escapeHtml(business.story)}</p></section>`
+          ? `<section class="panel"><h2>Historia</h2><p>${escapeHtml(business.story)}</p>
+             ${business.impactCause ? `<p class="meta">Impacto: ${escapeHtml(business.impactCause)}${business.impactFamiliesCount != null ? ` · ${business.impactFamiliesCount} familias` : ""}</p>` : ""}
+             </section>`
           : ""
       }
+
+      ${rewards ? `<section class="panel"><h2>Recompensas por nivel</h2><ul>${rewards}</ul></section>` : ""}
+
+      <section class="panel">
+        <h2>Tu progreso (niveles)</h2>
+        <div id="progress-box"><p class="meta">Cargando...</p></div>
+        <form class="form" id="scan-form" style="margin-top:1rem">
+          <label>Token QR del negocio
+            <input id="qr-token" type="text" placeholder="Pega aquí el token QR" />
+          </label>
+          <button class="btn btn-primary" type="submit">Registrar visita / escaneo</button>
+          <div class="form-msg" id="scan-msg"></div>
+        </form>
+      </section>
 
       <section class="panel">
         <h2>Productos y servicios</h2>
@@ -200,8 +285,12 @@ async function init() {
       e.preventDefault();
       submitRating(id);
     });
+    document.getElementById("scan-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      scanQr(id);
+    });
 
-    await Promise.all([loadProducts(id), loadRatings(id)]);
+    await Promise.all([loadProducts(id), loadRatings(id), loadProgress(id)]);
     window.initChatWidget?.(Number(id), business.whatsappNumber || null);
   } catch (err) {
     root.innerHTML = `<div class="state-box">${escapeHtml(err.message)}</div>`;

@@ -36,6 +36,10 @@
     localStorage.setItem(USER_KEY, JSON.stringify(auth.user));
   }
 
+  function setUser(user) {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  }
+
   function clearSession() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -43,6 +47,37 @@
 
   function isLoggedIn() {
     return Boolean(getToken());
+  }
+
+  function roleName() {
+    return getUser()?.roleName || "";
+  }
+
+  function isAdmin() {
+    return roleName() === "ROLE_ADMIN";
+  }
+
+  function isMerchant() {
+    return roleName() === "ROLE_MERCHANT";
+  }
+
+  function isTourist() {
+    return roleName() === "ROLE_TOURIST";
+  }
+
+  function requireAuth(redirect = "login.html") {
+    if (!isLoggedIn()) {
+      window.location.href = redirect;
+      return false;
+    }
+    return true;
+  }
+
+  function photoUrl(path) {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    const base = getApiBaseUrl().replace(/\/api\/v1\/?$/, "");
+    return path.startsWith("/") ? `${base}${path}` : `${getApiBaseUrl()}/${path}`;
   }
 
   async function api(path, options = {}) {
@@ -54,18 +89,11 @@
     };
 
     const token = getToken();
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) headers.Authorization = `Bearer ${token}`;
 
-    const response = await fetch(`${getApiBaseUrl()}${path}`, {
-      ...options,
-      headers,
-    });
+    const response = await fetch(`${getApiBaseUrl()}${path}`, { ...options, headers });
 
-    if (response.status === 204) {
-      return null;
-    }
+    if (response.status === 204) return null;
 
     const text = await response.text();
     let data = null;
@@ -89,6 +117,17 @@
     }
 
     return data;
+  }
+
+  async function apiForm(path, formData, method = "POST") {
+    return api(path, { method, body: formData });
+  }
+
+  async function refreshMe() {
+    if (!isLoggedIn()) return null;
+    const me = await api("/users/me");
+    setUser(me);
+    return me;
   }
 
   function categoryLabel(name) {
@@ -116,6 +155,16 @@
       .replaceAll('"', "&quot;");
   }
 
+  function statusBadge(status) {
+    const s = (status || "").toUpperCase();
+    const map = {
+      PENDING: "badge",
+      APPROVED: "badge badge-ok",
+      REJECTED: "badge badge-danger",
+    };
+    return `<span class="${map[s] || "badge"}">${escapeHtml(s || "—")}</span>`;
+  }
+
   function renderNav(active = "") {
     const user = getUser();
     const nav = document.getElementById("nav-links");
@@ -124,15 +173,28 @@
     const links = [
       { href: "index.html", label: "Explorar", key: "home" },
       { href: "favorites.html", label: "Favoritos", key: "favorites" },
-      { href: getSwaggerUrl(), label: "API Docs", key: "docs", className: "docs-link", external: true },
     ];
+
+    if (user && isTourist()) {
+      links.push({ href: "merchant-apply.html", label: "Ser comercio", key: "apply" });
+    }
+    if (user && isMerchant()) {
+      links.push({ href: "merchant.html", label: "Mis negocios", key: "merchant" });
+    }
+    if (user && isAdmin()) {
+      links.push({ href: "admin.html", label: "Admin", key: "admin" });
+    }
+    links.push({
+      href: getSwaggerUrl(),
+      label: "API Docs",
+      key: "docs",
+      className: "docs-link",
+      external: true,
+    });
 
     nav.innerHTML = links
       .map((link) => {
-        const cls = [
-          link.key === active ? "active" : "",
-          link.className || "",
-        ]
+        const cls = [link.key === active ? "active" : "", link.className || ""]
           .filter(Boolean)
           .join(" ");
         return `<a class="${cls}" href="${link.href}" ${link.external ? 'target="_blank" rel="noopener"' : ""}>${link.label}</a>`;
@@ -140,7 +202,7 @@
       .join("");
 
     if (user) {
-      nav.innerHTML += `<span class="meta">Hola, ${escapeHtml(user.name)}</span>`;
+      nav.innerHTML += `<span class="meta">${escapeHtml(user.name)} · ${escapeHtml((user.roleName || "").replace("ROLE_", ""))}</span>`;
       nav.innerHTML += `<button type="button" id="logout-btn">Salir</button>`;
       document.getElementById("logout-btn")?.addEventListener("click", () => {
         clearSession();
@@ -152,20 +214,46 @@
     }
   }
 
+  function pageShell(title) {
+    return `
+      <header class="site-header">
+        <div class="container nav">
+          <a class="brand" href="index.html">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-name">Sello<span>Dorado</span> MX</span>
+          </a>
+          <nav class="nav-links" id="nav-links"></nav>
+        </div>
+      </header>
+      <main class="container" id="main">${title || ""}</main>
+    `;
+  }
+
   window.SelloAPI = {
     getApiBaseUrl,
     getSwaggerUrl,
     getToken,
     getUser,
     setSession,
+    setUser,
     clearSession,
     isLoggedIn,
+    roleName,
+    isAdmin,
+    isMerchant,
+    isTourist,
+    requireAuth,
+    photoUrl,
     api,
+    apiForm,
+    refreshMe,
     categoryLabel,
     stars,
     formatMoney,
     escapeHtml,
+    statusBadge,
     renderNav,
+    pageShell,
     CATEGORY_LABELS,
   };
 })();
