@@ -1,12 +1,9 @@
 /**
- * Configuración del frontend — edita esto en la EC2.
- * Debe apuntar a la IP/dominio público del BACKEND (puerto 8088).
+ * El frontend y la API se publican por el mismo proxy Nginx.
  */
 window.SELLO_CONFIG = {
-  // Ejemplo en EC2: "http://3.23.51.132:8088/api/v1"
-  API_BASE_URL: "http://3.23.51.132:8088/api/v1",
-  // Documentación Swagger del backend
-  SWAGGER_URL: "http://3.23.51.132:8088/swagger-ui.html",
+  API_BASE_URL: "/api/v1",
+  SWAGGER_URL: "/swagger/",
 };
 
 window.API_BASE_URL = window.SELLO_CONFIG.API_BASE_URL;
